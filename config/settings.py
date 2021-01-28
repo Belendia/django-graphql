@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'graphene_django',
     'apps.users'
 ]
 
@@ -119,3 +120,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'users.User'
+
+GRAPHENE = {
+    'SCHEMA': 'apps.schema.schema.schema'  # Where your Graphene schema lives
+}

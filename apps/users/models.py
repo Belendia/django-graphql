@@ -33,18 +33,6 @@ class UserManager(BaseUserManager):
         return user
 
 
-def has_module_perms(app_label):
-    """Does the user have permissions to view the app `app_label`?"""
-    # Simplest possible answer: Yes, always
-    return True
-
-
-def has_perm(perm, obj=None):
-    """Does the user have a specific permission?"""
-    # Simplest possible answer: Yes, always
-    return True
-
-
 class User(AbstractBaseUser):
     email = models.EmailField(
         verbose_name='email address',
