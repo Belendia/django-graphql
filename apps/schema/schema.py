@@ -1,8 +1,23 @@
+from django.utils import timezone
 from graphene_django import DjangoObjectType
 import graphene
+
 from apps.users.models import User as UserModel
 from apps.decks.models import Deck as DeckModel
 from apps.cards.models import Card as CardModel
+
+buckets = (
+    (1, 1),
+    (2, 3),
+    (3, 7),
+    (4, 16),
+    (5, 30),
+)
+
+
+def return_date_time(days):
+    now = timezone.now()
+    return now + timezone.timedelta(days=days)
 
 
 class User(DjangoObjectType):
@@ -38,6 +53,42 @@ class CreateCard(graphene.Mutation):
         return CreateCard(card=c)
 
 
+class UpdateCard(graphene.Mutation):
+    class Arguments:
+        # The input arguments for this mutation
+        id = graphene.ID()
+        question = graphene.String(required=True)
+        answer = graphene.String()
+        # easy, average, or difficult -> 1, 2, 3
+        status = graphene.Int()
+
+    # The class attributes define the response of the mutation
+    card = graphene.Field(Card)
+
+    def mutate(self, info, id, question, answer, status):
+        c = CardModel.objects.get(id=id)
+
+        bucket = c.bucket
+        if status == 1 and bucket > 1:
+            bucket -= 1
+        elif status == 3 and bucket <= 4:
+            bucket += 1
+
+        # Calculate next review at date
+        days = buckets[bucket - 1][1]
+        next_review_at = return_date_time(days)
+
+        c.question = question
+        c.answer = answer
+        c.bucket = bucket
+        c.next_review_at = next_review_at
+        c.last_reviewed_at = timezone.now()
+
+        c.save()
+        # Notice we return an instance of this mutation
+        return UpdateCard(card=c)
+
+
 class CreateDeck(graphene.Mutation):
     class Arguments:
         # The input arguments for this mutation
@@ -57,6 +108,7 @@ class CreateDeck(graphene.Mutation):
 class Mutation(graphene.ObjectType):
     create_card = CreateCard.Field()
     create_deck = CreateDeck.Field()
+    update_card = UpdateCard.Field()
 
 
 class Query(graphene.ObjectType):
