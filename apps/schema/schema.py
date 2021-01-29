@@ -62,7 +62,9 @@ class Mutation(graphene.ObjectType):
 class Query(graphene.ObjectType):
     users = graphene.List(User)
     decks = graphene.List(Deck)
+    deck_by_id = graphene.Field(Deck, id=graphene.Int())
     cards = graphene.List(Card)
+    deck_cards = graphene.List(Card, deck=graphene.Int())
 
     def resolve_users(self, info):
         return UserModel.objects.all()
@@ -70,8 +72,14 @@ class Query(graphene.ObjectType):
     def resolve_decks(self, info):
         return DeckModel.objects.all()
 
+    def resolve_deck_by_id(self, info, id):
+        return DeckModel.objects.get(pk=id)
+
     def resolve_cards(self, info):
         return CardModel.objects.all()
+
+    def resolve_deck_cards(self, info, deck):
+        return CardModel.objects.filter(deck=deck)
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
