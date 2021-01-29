@@ -1,6 +1,7 @@
 import graphene
 from django.utils import timezone
 from graphene_django import DjangoObjectType
+from graphql import GraphQLError
 
 from .models import Card
 from apps.decks.models import Deck
@@ -49,12 +50,15 @@ class UpdateCardMutation(graphene.Mutation):
         question = graphene.String(required=True)
         answer = graphene.String()
         # easy, average, or difficult -> 1, 2, 3
-        status = graphene.Int()
+        status = graphene.Int(description="easy, average, or difficult -> 1, 2, 3")
 
     # The class attributes define the response of the mutation
     card = graphene.Field(CardType)
 
     def mutate(self, info, id, question, answer, status):
+        if status not in [1, 2, 3]:
+            raise GraphQLError("Status out of bounds. Must be 1, 2, or 3.")
+
         c = Card.objects.get(id=id)
 
         bucket = c.bucket
